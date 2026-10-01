@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>911 GT3 RS — conceito de portfólio (não oficial)</title>
+<meta name="description" content="Projeto conceitual: o 911 GT3 RS contado como um filme, quadro a quadro, pelo scroll.">
+<link rel="preload" as="font" type="font/woff2" href="fonts/archivo-latin-wdth-normal.woff2" crossorigin>
+<link rel="preload" as="image" href="frames/d/001.jpg">
+<style>
+ @font-face{font-family:"Archivo";font-style:normal;font-display:swap;font-weight:100 900;font-stretch:62% 125%;
+  src:url(fonts/archivo-latin-wdth-normal.woff2) format("woff2-variations"),url(fonts/archivo-latin-wdth-normal.woff2) format("woff2");
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Archivo";font-style:normal;font-display:swap;font-weight:100 900;font-stretch:62% 125%;
+  src:url(fonts/archivo-latin-ext-wdth-normal.woff2) format("woff2-variations"),url(fonts/archivo-latin-ext-wdth-normal.woff2) format("woff2");
+  unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1E9F,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113}
+:root{
+  --breu:#050506;      /* quadro 0 do filme */
+  --parede:#272f31;    /* parede do estúdio */
+  --piso:#aab0b3;      /* piso do estúdio, último quadro */
+  --giz:#e6e8e8;
+  --tinta:#101415;
+  --pinca:#e4b726;     /* a pinça de freio — única cor */
+  --muted:rgba(230,232,232,.56);
+  --gutter:clamp(20px,4vw,64px);
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--breu);-webkit-text-size-adjust:100%}
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+body{
+  background:var(--breu);color:var(--giz);
+  font-family:"Archivo",system-ui,sans-serif;font-variation-settings:"wdth" 100;
+  font-size:clamp(15px,1.05vw,17px);line-height:1.55;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:1.5px solid var(--pinca);outline-offset:4px;border-radius:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ---------- loader ---------- */
+.loader{position:fixed;inset:0;z-index:50;background:var(--breu);display:grid;place-items:end start;padding:var(--gutter);transition:opacity .9s var(--ease),visibility .9s}
+.loader.done{opacity:0;visibility:hidden}
+.loader p{font-size:13px;color:var(--muted);display:flex;gap:18px;align-items:baseline}
+.loader b{font-weight:500;color:var(--giz);font-variant-numeric:tabular-nums;font-variation-settings:"wdth" 75;font-size:15px;min-width:4ch}
+.loader i{position:absolute;left:0;bottom:0;height:1px;width:100%;background:var(--giz);transform:scaleX(0);transform-origin:left;transition:transform .3s linear}
+
+/* ---------- header ---------- */
+.top{position:fixed;inset:0 0 auto;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:22px var(--gutter);transition:color .5s var(--ease)}
+.top.light{color:var(--tinta)}
+.mark{font-weight:640;font-size:17px;font-variation-settings:"wdth" 125;letter-spacing:.14em}
+.mark .tag{font-size:12px;font-weight:400;letter-spacing:0;font-variation-settings:"wdth" 100;opacity:.6;margin-left:12px}
+.top nav{display:flex;gap:clamp(18px,3vw,40px);font-size:14px}
+.top nav a{position:relative;opacity:.72;transition:opacity .3s}
+.top nav a:hover{opacity:1}
+.top nav a::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:1px;background:currentColor;transform:scaleX(0);transform-origin:right;transition:transform .5s var(--ease)}
+.top nav a:hover::after{transform:scaleX(1);transform-origin:left}
+
+/* ---------- filme ---------- */
+.film{position:relative;height:1000vh}
+.stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.veil{position:absolute;inset:0;pointer-events:none;
+  background:
+   radial-gradient(120% 90% at 50% 45%,transparent 55%,rgba(5,5,6,.55) 100%),
+   linear-gradient(to top,rgba(5,5,6,.6),transparent 34%);
+}
+.floor{position:absolute;inset:auto 0 0;height:42%;pointer-events:none;opacity:0;
+  background:linear-gradient(to top,var(--piso) 6%,rgba(170,176,179,0))}
+
+.ch{position:absolute;pointer-events:none;max-width:34ch}
+.ch h2{font-weight:520;font-size:clamp(30px,3.6vw,58px);line-height:1.02;letter-spacing:-.02em;font-variation-settings:"wdth" 88;margin-bottom:.55em}
+.ch p{color:var(--muted);max-width:36ch}
+.c-olhar,.c-ar,.c-freio,.c-asa{max-width:none}.c-olhar p,.c-ar p,.c-freio p,.c-asa p{max-width:34ch}
+.line{display:block;overflow:hidden;padding-bottom:.06em;white-space:nowrap}
+.line>span{display:block;will-change:transform}
+
+/* hero */
+.hero{left:var(--gutter);right:var(--gutter);bottom:clamp(96px,14vh,150px);max-width:none}
+.hero .kicker{font-size:15px;color:var(--muted);margin-bottom:10px;display:block}
+.hero h1{font-weight:760;line-height:.8;letter-spacing:-.035em;font-size:clamp(76px,15.5vw,270px);font-variation-settings:"wdth" 125;white-space:nowrap;will-change:font-variation-settings}
+.hero h1 .ltr{display:inline-block;will-change:transform}
+.hero .sub{display:flex;justify-content:space-between;align-items:end;gap:24px;margin-top:28px}
+.hero .sub p{max-width:30ch;color:var(--muted)}
+.cue{display:flex;align-items:center;gap:14px;font-size:14px;color:var(--giz);pointer-events:auto}
+.cue span{position:relative;width:56px;height:1px;background:rgba(230,232,232,.25);overflow:hidden}
+.cue span::after{content:"";position:absolute;inset:0;background:var(--giz);transform:translateX(-100%);animation:cue 2.4s var(--ease) infinite}
+@keyframes cue{60%,100%{transform:translateX(100%)}}
+
+.c-olhar{right:var(--gutter);top:50%;transform:translateY(-40%)}
+.c-ar{left:var(--gutter);top:clamp(110px,17vh,180px)}
+.c-freio{left:var(--gutter);top:50%;transform:translateY(-50%)}
+.c-freio .big{display:block;font-weight:300;font-variation-settings:"wdth" 70;font-size:clamp(90px,11vw,190px);line-height:.85;letter-spacing:-.03em;color:var(--pinca);margin-bottom:.12em;font-variant-numeric:tabular-nums}
+.c-freio .big small{font-size:max(18px,.28em);letter-spacing:0;margin-left:.15em;font-weight:400}
+.c-asa{left:var(--gutter);bottom:clamp(110px,16vh,170px)}
+.c-final{left:0;right:0;top:clamp(84px,13vh,140px);max-width:none;text-align:center}
+.c-final h2{font-weight:780;font-size:clamp(64px,13vw,230px);line-height:.82;letter-spacing:-.04em;font-variation-settings:"wdth" 62;margin:0;will-change:font-variation-settings}
+.c-final p{margin:18px auto 0;color:var(--giz);opacity:.8}
+
+/* HUD: o scroll é o acelerador */
+.hud{position:absolute;left:var(--gutter);right:var(--gutter);bottom:clamp(22px,4vh,36px);display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:22px;font-size:13px;pointer-events:none}
+.hud .name{color:var(--muted);min-width:9ch}
+.track{position:relative;height:1px;background:rgba(230,232,232,.18)}
+.track i{position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--giz);transform-origin:left;transform:scaleX(0)}
+.track i.red{background:var(--pinca)}
+.track b{position:absolute;top:-3px;width:1px;height:7px;background:rgba(230,232,232,.4)}
+.rpm{font-variant-numeric:tabular-nums;font-variation-settings:"wdth" 75;font-size:15px;font-weight:500;text-align:right;min-width:10ch;transition:color .25s}
+.rpm.red{color:var(--pinca)}
+.rpm small{color:var(--muted);font-size:12px;font-weight:400;margin-left:6px}
+
+/* ---------- ficha (o piso do estúdio vira página) ---------- */
+.ficha{background:var(--piso);color:var(--tinta);padding:clamp(80px,12vw,180px) var(--gutter) clamp(90px,12vw,170px);display:grid;grid-template-columns:5fr 7fr;gap:clamp(40px,6vw,120px);position:relative}
+.ficha h2{font-weight:560;font-size:clamp(34px,4.2vw,68px);line-height:1;letter-spacing:-.025em;font-variation-settings:"wdth" 90;position:sticky;top:120px;align-self:start;max-width:12ch}
+.ficha .lede{display:block;margin-top:28px;max-width:34ch;font-size:16px;color:rgba(16,20,21,.68);font-variation-settings:"wdth" 100;font-weight:400;letter-spacing:0;line-height:1.55}
+.specs{list-style:none}
+.specs li{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:end;gap:24px;padding:clamp(22px,3vw,38px) 0;border-top:1px solid rgba(16,20,21,.22)}
+.specs li:last-child{border-bottom:1px solid rgba(16,20,21,.22)}
+.val{font-weight:300;font-size:clamp(54px,7.4vw,124px);line-height:.85;letter-spacing:-.035em;font-variation-settings:"wdth" 72;font-variant-numeric:tabular-nums;white-space:nowrap}
+.val small{font-size:max(15px,.3em);font-weight:500;letter-spacing:0;margin-left:.2em;font-variation-settings:"wdth" 100}
+.specs p{font-size:15px;color:rgba(16,20,21,.72);max-width:28ch;padding-bottom:.4em}
+.specs p strong{display:block;color:var(--tinta);font-weight:600;margin-bottom:2px}
+.ficha .fine{grid-column:2;font-size:12px;color:rgba(16,20,21,.55);margin-top:-4px}
+
+/* ---------- convite ---------- */
+.invite{position:relative;min-height:100vh;display:grid;align-content:end;padding:clamp(120px,16vw,220px) var(--gutter) clamp(36px,5vw,64px);overflow:hidden;background:var(--breu)}
+.invite figure{position:absolute;inset:0;z-index:0}
+.invite figure img{width:100%;height:118%;object-fit:cover;object-position:62% 50%;opacity:.7;will-change:transform}
+.invite figure::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--breu) 18%,rgba(5,5,6,.55) 55%,rgba(5,5,6,.2)),linear-gradient(to top,var(--breu),transparent 40%)}
+.invite .in{position:relative;z-index:1;max-width:1400px}
+.invite h2{font-weight:600;font-size:clamp(44px,7.6vw,132px);line-height:.9;letter-spacing:-.035em;font-variation-settings:"wdth" 110;max-width:11ch}
+.invite p{margin-top:28px;max-width:44ch;color:var(--muted);font-size:clamp(15px,1.2vw,18px)}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:18px 34px;margin-top:44px}
+.btn{position:relative;display:inline-flex;align-items:center;gap:16px;height:60px;padding:0 30px;border-radius:999px;background:var(--giz);color:var(--tinta);font-weight:560;font-size:15px;overflow:hidden;isolation:isolate;transition:transform .5s var(--ease)}
+.btn::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--pinca);transform:translateY(101%);transition:transform .55s var(--ease)}
+.btn:hover::before{transform:none}
+.btn:active{transform:scale(.98)}
+.btn svg{width:18px;height:18px;transition:transform .55s var(--ease)}
+.btn:hover svg{transform:translateX(4px)}
+.ghost{font-size:15px;border-bottom:1px solid rgba(230,232,232,.35);padding-bottom:4px;transition:border-color .3s}
+.ghost:hover{border-color:var(--giz)}
+footer{position:relative;z-index:1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px 32px;margin-top:clamp(90px,12vw,170px);padding-top:22px;border-top:1px solid rgba(230,232,232,.14);font-size:12px;color:rgba(230,232,232,.45)}
+
+/* ---------- mobile: composição própria ---------- */
+@media (max-width:760px){
+  .top{padding:18px var(--gutter)}
+  .top nav a:first-child{display:none}
+  .mark .tag{display:block;margin:4px 0 0;font-size:11px}
+  .veil{background:linear-gradient(to top,rgba(5,5,6,.88) 0%,rgba(5,5,6,.5) 30%,transparent 52%)}
+  .ch,.c-olhar,.c-ar,.c-freio,.c-asa{left:var(--gutter);right:var(--gutter);top:auto;bottom:92px;transform:none;max-width:none}
+  .ch h2{font-size:clamp(30px,8.6vw,40px)}
+  .hero{bottom:96px}
+  .hero h1{font-size:18.5vw}
+  .line{white-space:normal}
+  .hero .sub{flex-direction:column;align-items:flex-start;margin-top:22px}
+  .c-freio .big{font-size:clamp(84px,26vw,120px)}
+  .c-final{top:auto;bottom:96px}
+  .c-final h2{font-size:17.5vw;white-space:nowrap}
+  .hud{grid-template-columns:1fr auto;gap:8px 16px}
+  .hud .track{grid-column:1/-1;grid-row:2}
+  .ficha{grid-template-columns:1fr}
+  .ficha h2{position:static;max-width:14ch}
+  .ficha .fine{grid-column:1}
+  .specs li{grid-template-columns:1fr;gap:10px}
+  .invite figure img{object-position:70% 50%}
+  .invite figure::after{background:linear-gradient(to top,var(--breu) 35%,rgba(5,5,6,.35))}
+  .btn{width:100%;justify-content:space-between}
+}
+@media (prefers-reduced-motion:reduce){
+  .cue span::after{animation:none;transform:none}
+}
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader" role="status" aria-live="polite">
+  <p>Aquecendo os pneus <b id="pct">0%</b></p><i id="bar"></i>
+</div>
+
+<header class="top" id="top">
+  <a class="mark" href="#film" aria-label="Início — conceito de portfólio">PORSCHE <span class="tag">conceito de portfólio</span></a>
+  <nav aria-label="Principal">
+    <a href="#ficha">Ficha técnica</a>
+    <a href="#convite">Agendar test drive</a>
+  </nav>
+</header>
+
+<main>
+  <section class="film" id="film" aria-label="O 911 GT3 RS em seis cenas">
+    <div class="stage">
+      <canvas id="cv" aria-hidden="true"></canvas>
+      <div class="veil"></div>
+      <div class="floor" id="floor"></div>
+
+      <!-- Cena 01 — Impacto -->
+      <div class="ch hero" id="c0">
+        <span class="kicker">Porsche 911</span>
+        <h1 id="heroTitle" aria-label="GT3 RS">GT3 RS</h1>
+        <div class="sub">
+          <p>Nasceu no autódromo. Foi homologado para a rua quase por acidente.</p>
+          <a class="cue" href="#c1" id="cue"><span></span>Role para acelerar</a>
+        </div>
+      </div>
+
+      <!-- Cena 02 — Olhar -->
+      <div class="ch c-olhar" id="c1">
+        <h2><span class="line"><span>Ele vê a curva</span></span><span class="line"><span>antes de você.</span></span></h2>
+        <p>Quatro pontos de luz em cada farol. A assinatura chega no seu retrovisor antes do ronco.</p>
+      </div>
+
+      <!-- Cena 03 — Ar -->
+      <div class="ch c-ar" id="c2">
+        <h2><span class="line"><span>Cada abertura</span></span><span class="line"><span>tem um trabalho.</span></span></h2>
+        <p>Radiador central, ar expulso pelo capô e dutos que puxam o carro contra o asfalto. A carroceria inteira funciona como uma asa invertida.</p>
+      </div>
+
+      <!-- Cena 04 — Freio -->
+      <div class="ch c-freio" id="c3">
+        <span class="big"><span id="disc">0</span><small>mm</small></span>
+        <h2><span class="line"><span>Parar também</span></span><span class="line"><span>é velocidade.</span></span></h2>
+        <p>Discos de carbono-cerâmica na dianteira, pinças de seis pistões. Você freia mais tarde e sai da curva primeiro.</p>
+      </div>
+
+      <!-- Cena 05 — Asa -->
+      <div class="ch c-asa" id="c4">
+        <h2><span class="line"><span>860 kg empurrando</span></span><span class="line"><span>o carro para baixo.</span></span></h2>
+        <p>A 285 km/h, a asa traseira gera quase o peso de um segundo carro em pressão. Na reta, o DRS abre e devolve a velocidade.</p>
+      </div>
+
+      <!-- Cena 06 — Clímax -->
+      <div class="ch c-final" id="c5">
+        <h2 id="finalTitle">GT3 RS</h2>
+        <p>Feito para a volta mais rápida. Disponível para a sua garagem.</p>
+      </div>
+
+      <div class="hud" aria-hidden="true">
+        <span class="name" id="hudName">Partida</span>
+        <div class="track" id="track"><i id="fill"></i></div>
+        <span class="rpm" id="rpm">0<small>rpm</small></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cena 06b — Detalhes: o piso do estúdio vira página -->
+  <section class="ficha" id="ficha" aria-labelledby="fichaT">
+    <h2 id="fichaT">Os números que importam na pista.
+      <span class="lede">Sem turbo, sem atalhos. Um boxer de seis cilindros aspirado que gira até onde poucos motores de rua chegam.</span>
+    </h2>
+    <ul class="specs">
+      <li><span class="val" data-to="525">0<small>cv</small></span><p><strong>Potência</strong>Motor 4.0 boxer aspirado, seis cilindros.</p></li>
+      <li><span class="val" data-to="9000" data-sep>0<small>rpm</small></span><p><strong>Limite de giro</strong>O ponteiro só para onde a maioria dos motores nem chega.</p></li>
+      <li><span class="val" data-to="3.2" data-dec="1">0<small>s</small></span><p><strong>0 a 100 km/h</strong>Com o câmbio PDK de sete marchas.</p></li>
+      <li><span class="val" data-to="860">0<small>kg</small></span><p><strong>Pressão aerodinâmica</strong>Medida a 285 km/h, com a asa na posição de pista.</p></li>
+      <li><span class="val" data-to="296">0<small>km/h</small></span><p><strong>Velocidade máxima</strong>Limitada pelo arrasto da própria asa, por escolha.</p></li>
+    </ul>
+    <p class="fine">Dados de referência do 911 GT3 RS (geração 992), sujeitos a variação por mercado.</p>
+  </section>
+
+  <!-- Cena 07 — Conversão -->
+  <section class="invite" id="convite" aria-labelledby="convT">
+    <figure aria-hidden="true"><img id="invImg" src="frames/d/170.jpg" alt="" loading="lazy" decoding="async"></figure>
+    <div class="in">
+      <h2 id="convT">A próxima volta é sua.</h2>
+      <p>Agende uma sessão no autódromo com um instrutor da marca. Você pilota, ele mostra onde estão os décimos.</p>
+      <div class="actions">
+        <a class="btn" href="#convite">Agendar minha volta no autódromo
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></a>
+        <a class="ghost" href="#convite">Montar meu RS com um consultor</a>
+      </div>
+    </div>
+    <footer>
+      <span>Projeto conceitual de portfólio. Sem vínculo com a Porsche AG.</span>
+      <span>Filme gerado por IA. Direção e código por Whallyson Gabriel.</span>
+    </footer>
+  </section>
+</main>
+
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/ScrollTrigger.min.js"></script>
+<script src="vendor/lenis.min.js"></script>
+<script>
+(() => {
+  const FRAMES = 240;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const mobile = matchMedia('(max-width: 760px)').matches;
+  const dir = mobile ? 'frames/m/' : 'frames/d/';
+  const src = i => dir + String(i + 1).padStart(3, '0') + '.jpg';
+
+  /* ---------- frames: carrega em camadas (16, 8, 4, 2, 1) ---------- */
+  const imgs = new Array(FRAMES).fill(null);
+  const order = [];
+  const seen = new Set();
+  [16, 8, 4, 2, 1].forEach(step => { for (let i = 0; i < FRAMES; i += step) if (!seen.has(i)) { seen.add(i); order.push(i); } });
+  if (!seen.has(FRAMES - 1)) order.splice(1, 0, FRAMES - 1);
+
+  let loaded = 0, started = false;
+  const pct = document.getElementById('pct'), bar = document.getElementById('bar');
+  const firstPass = Math.ceil(FRAMES / 16) + 1;
+
+  function loadQueue(concurrency = 6) {
+    let k = 0;
+    const next = () => {
+      if (k >= order.length) return;
+      const i = order[k++];
+      const im = new Image();
+      im.decoding = 'async';
+      im.onload = () => {
+        imgs[i] = im; loaded++;
+        if (!started) {
+          const p = Math.min(100, Math.round(loaded / firstPass * 100));
+          pct.textContent = p + '%'; bar.style.transform = `scaleX(${p / 100})`;
+          if (loaded >= firstPass) start();
+        }
+        if (i === cur || needs(i)) draw(cur, true);
+        next();
+      };
+      im.onerror = next;
+      im.src = src(i);
+    };
+    for (let c = 0; c < concurrency; c++) next();
+  }
+  const needs = i => Math.abs(i - cur) < 16;
+
+  /* ---------- canvas ---------- */
+  const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  let W = 0, H = 0, dpr = 1, cur = 0, drawn = -1;
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingQuality = 'high';
+    draw(cur, true);
+  }
+  function nearest(i) {
+    if (imgs[i]) return imgs[i];
+    for (let d = 1; d < FRAMES; d++) {
+      if (imgs[i - d]) return imgs[i - d];
+      if (imgs[i + d]) return imgs[i + d];
+    }
+    return null;
+  }
+  const sc = document.createElement('canvas'); sc.width = 1; sc.height = 2;
+  const sx = sc.getContext('2d', { willReadFrequently: true });
+  const edgeCache = new WeakMap();
+  function edgeColors(im) {
+    let c = edgeCache.get(im); if (c) return c;
+    const iw = im.naturalWidth, ih = im.naturalHeight;
+    sx.drawImage(im, 0, 0, iw, Math.round(ih * .06), 0, 0, 1, 1);
+    sx.drawImage(im, 0, Math.round(ih * .94), iw, Math.round(ih * .06), 0, 1, 1, 1);
+    try {
+      const d = sx.getImageData(0, 0, 1, 2).data;
+      c = [`rgb(${d[0]},${d[1]},${d[2]})`, `rgb(${d[4]},${d[5]},${d[6]})`];
+    } catch (e) { c = ['#1e2224', '#8a9194']; } // aberto via file:// — cores médias do estúdio
+    edgeCache.set(im, c); return c;
+  }
+  function draw(i, force) {
+    i = Math.max(0, Math.min(FRAMES - 1, Math.round(i)));
+    if (i === drawn && !force) return;
+    const im = nearest(i); if (!im) return;
+    cur = i; drawn = imgs[i] ? i : -1;
+    const iw = im.naturalWidth, ih = im.naturalHeight;
+    const portrait = H / W > 1.15;
+    if (!portrait) {
+      // desktop: cover
+      const s = Math.max(W / iw, H / ih), w = iw * s, h = ih * s;
+      ctx.drawImage(im, (W - w) / 2, (H - h) / 2, w, h);
+    } else {
+      // mobile: o quadro ocupa o centro e a parede/piso do estúdio se estendem
+      const s = Math.max((H * .58) / ih, W / iw), w = iw * s, h = ih * s;
+      const x = (W - w) / 2, y = H * .40 - h / 2;
+      const [top, bot] = edgeColors(im);
+      ctx.fillStyle = top; ctx.fillRect(0, 0, W, y + 2);          // parede do estúdio
+      ctx.fillStyle = bot; ctx.fillRect(0, y + h - 2, W, H);      // piso do estúdio
+      ctx.drawImage(im, x, y, w, h);
+      const f = Math.min(90, h * .22);
+      let g = ctx.createLinearGradient(0, y, 0, y + f); g.addColorStop(0, top); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, y, W, f);
+      g = ctx.createLinearGradient(0, y + h, 0, y + h - f); g.addColorStop(0, bot); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, y + h - f, W, f);
+    }
+  }
+  addEventListener('resize', () => { clearTimeout(resize.t); resize.t = setTimeout(() => { resize(); ScrollTrigger.refresh(); }, 120); });
+
+  /* ---------- texto: hero em letras ---------- */
+  const heroTitle = document.getElementById('heroTitle');
+  heroTitle.innerHTML = [...heroTitle.textContent].map(c => c === ' ' ? ' ' : `<span class="ltr" aria-hidden="true">${c}</span>`).join('');
+
+  gsap.registerPlugin(ScrollTrigger);
+  resize();
+  loadQueue();
+
+  /* ---------- smooth scroll ---------- */
+  let lenis = null;
+  if (!reduce) {
+    lenis = new Lenis({ lerp: .085, smoothWheel: true });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add(t => lenis.raf(t * 1000));
+    gsap.ticker.lagSmoothing(0);
+    lenis.stop();
+  }
+  document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
+    const id = a.getAttribute('href'); const el = id.length > 1 && document.querySelector(id);
+    if (!el) return; e.preventDefault();
+    let y = el.closest('.film') ? document.getElementById('film').offsetTop + innerHeight * 3.4 : el.offsetTop;
+    if (id === '#film') y = 0;
+    lenis ? lenis.scrollTo(y, { duration: 2.2 }) : scrollTo({ top: y, behavior: 'auto' });
+  }));
+
+  /* ---------- abertura: o único momento automático ---------- */
+  gsap.set('#c0 .ltr', { yPercent: 105 });
+  gsap.set(['#c0 .kicker', '#c0 .sub'], { autoAlpha: 0, y: 14 });
+  gsap.set(['#c1', '#c2', '#c3', '#c4', '#c5'], { autoAlpha: 0 });
+  heroTitle.parentElement.style.overflow = 'visible';
+  heroTitle.style.overflow = 'hidden';
+  heroTitle.style.paddingBottom = '.04em';
+
+  function start() {
+    if (started) return; started = true;
+    pct.textContent = '100%'; bar.style.transform = 'scaleX(1)';
+    setTimeout(() => document.getElementById('loader').classList.add('done'), 250);
+    const tl = gsap.timeline({ delay: .45, onComplete: () => lenis && lenis.start() });
+    // a luz acende: avançamos alguns quadros sozinhos, como o motor em marcha lenta
+    const idle = { f: 0 };
+    tl.to(idle, { f: 22, duration: 2.4, ease: 'power2.out', onUpdate: () => { if (scrollY < 5) draw(idle.f); } }, 0)
+      .to('#c0 .ltr', { yPercent: 0, duration: 1.3, ease: 'expo.out', stagger: .055 }, .5)
+      .to(['#c0 .kicker', '#c0 .sub'], { autoAlpha: 1, y: 0, duration: 1, ease: 'power3.out', stagger: .12 }, 1.1);
+    if (reduce) tl.progress(1);
+    build(idle);
+  }
+
+  /* ---------- a sequência: um único timeline ligado ao scroll ---------- */
+  const scenes = [
+    { name: 'Partida', at: 0 }, { name: 'Olhar', at: .33 }, { name: 'Ar', at: .46 },
+    { name: 'Freios', at: .62 }, { name: 'Asa', at: .75 }, { name: 'Linha de chegada', at: .915 }
+  ];
+  const track = document.getElementById('track');
+  scenes.slice(1).forEach(s => { const b = document.createElement('b'); b.style.left = (s.at * 100) + '%'; track.appendChild(b); });
+
+  function build(idle) {
+    const hudName = document.getElementById('hudName'), rpm = document.getElementById('rpm'),
+          fill = document.getElementById('fill'), disc = document.getElementById('disc');
+    const fmt = n => n.toLocaleString('pt-BR');
+    const head = { f: 0 };
+    const y = reduce ? 0 : 1;
+
+    const tl = gsap.timeline({
+      defaults: { ease: 'none' },
+      scrollTrigger: {
+        trigger: '#film', start: 'top top', end: 'bottom bottom',
+        scrub: reduce ? true : .7,
+        onUpdate(st) {
+          const p = st.progress;
+          // HUD
+          fill.style.transform = `scaleX(${p})`;
+          const r = Math.round(800 + p * 8200);
+          rpm.firstChild.nodeValue = fmt(Math.round(r / 10) * 10);
+          const red = p > .9; rpm.classList.toggle('red', red); fill.classList.toggle('red', red);
+          let n = scenes[0].name; for (const s of scenes) if (p >= s.at - .02) n = s.name;
+          if (hudName.textContent !== n) hudName.textContent = n;
+        }
+      }
+    });
+
+    // quadros: abertura dura mais (respiração), detalhes passam no ritmo do filme
+    tl.fromTo(head, { f: 0 }, { f: FRAMES - 1, duration: 100, onUpdate: () => draw(Math.max(head.f, scrollY < 5 ? idle.f : 0)) }, 0);
+
+    // Cena 01 sai: o título comprime como quem passa em alta
+    tl.to('#heroTitle', { fontVariationSettings: '"wdth" 62', duration: 10, ease: 'power2.in' }, 12)
+      .to('#c0 .ltr', { xPercent: i => -i * 18 * y, duration: 10, ease: 'power2.in' }, 12)
+      .to('#c0', { autoAlpha: 0, y: -40 * y, filter: reduce ? 'none' : 'blur(6px)', duration: 7, ease: 'power2.in' }, 17)
+      .to('#cue', { autoAlpha: 0, duration: 2 }, 2);
+
+    // Cenas 02–05
+    const scene = (id, a, b) => {
+      tl.fromTo(`${id}`, { autoAlpha: 0 }, { autoAlpha: 1, duration: 1.5 }, a)
+        .fromTo(`${id} .line>span`, { yPercent: 110 * y }, { yPercent: 0, duration: 3.5, stagger: .9, ease: 'power3.out' }, a)
+        .fromTo(`${id} p`, { autoAlpha: 0, y: 18 * y }, { autoAlpha: 1, y: 0, duration: 3, ease: 'power2.out' }, a + 1.6)
+        .to(`${id} .line>span`, { yPercent: -110 * y, duration: 3, stagger: .6, ease: 'power2.in' }, b)
+        .to(`${id}`, { autoAlpha: 0, duration: 3 }, b + .4);
+    };
+    scene('#c1', 34, 43.5);
+    scene('#c2', 47.5, 58);
+    scene('#c3', 63.5, 72);
+    scene('#c4', 76.5, 87.5);
+
+    // o diâmetro do disco conta junto com o scroll
+    const dv = { v: 0 };
+    tl.fromTo('#c3 .big', { autoAlpha: 0, y: 30 * y }, { autoAlpha: 1, y: 0, duration: 3, ease: 'power3.out' }, 63)
+      .to(dv, { v: 410, duration: 6, ease: 'power2.out', onUpdate: () => disc.textContent = Math.round(dv.v) }, 63)
+      .to('#c3 .big', { autoAlpha: 0, duration: 3 }, 72.4);
+
+    // Cena 06 — clímax: o título se expande enquanto a luz chega no piso
+    tl.fromTo('#c5', { autoAlpha: 0 }, { autoAlpha: 1, duration: 2 }, 91.5)
+      .fromTo('#finalTitle', { fontVariationSettings: '"wdth" 62', letterSpacing: '-.04em' }, { fontVariationSettings: '"wdth" 125', letterSpacing: '-.02em', duration: 6, ease: 'power3.out' }, 91.5)
+      .fromTo('#c5 p', { autoAlpha: 0, y: 14 * y }, { autoAlpha: 1, y: 0, duration: 3 }, 94)
+      .fromTo('#floor', { opacity: 0 }, { opacity: 1, duration: 6, ease: 'power1.in' }, 94);
+
+    /* ---------- ficha: números contam ao entrar ---------- */
+    document.querySelectorAll('.val').forEach(el => {
+      const to = parseFloat(el.dataset.to), dec = +(el.dataset.dec || 0), unit = el.querySelector('small');
+      const o = { v: 0 };
+      const set = () => { el.firstChild.nodeValue = dec ? o.v.toFixed(dec).replace('.', ',') : fmt(Math.round(o.v)); };
+      el.firstChild.nodeValue = dec ? (0).toFixed(dec).replace('.', ',') : '0';
+      ScrollTrigger.create({
+        trigger: el, start: 'top 85%', once: true,
+        onEnter: () => reduce ? (o.v = to, set()) : gsap.to(o, { v: to, duration: 1.6, ease: 'expo.out', onUpdate: set })
+      });
+    });
+
+    // header muda de tinta sobre o piso claro
+    ScrollTrigger.create({ trigger: '#ficha', start: 'top 40px', end: 'bottom 40px', toggleClass: { targets: '#top', className: 'light' } });
+
+    // convite: a roda desliza lentamente (parallax)
+    if (!reduce) gsap.fromTo('#invImg', { yPercent: -9 }, { yPercent: 0, ease: 'none', scrollTrigger: { trigger: '#convite', start: 'top bottom', end: 'bottom bottom', scrub: true } });
+    gsap.from('#convite .in > *', { autoAlpha: 0, y: 30 * y, duration: 1.2, ease: 'power3.out', stagger: .12, scrollTrigger: { trigger: '#convite', start: 'top 45%' } });
+
+    ScrollTrigger.refresh();
+  }
+
+  // fallback: se a rede travar, libera o site mesmo assim
+  setTimeout(() => { if (!started && loaded > 0) start(); }, 7000);
+})();
+</script>
+</body>
+</html>
